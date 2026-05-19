@@ -18,3 +18,5 @@
 2026-05-18 17:43:49,719 endpoint=/agent duration=8647ms command='df -h' question='how much disk space do I have?'
 2026-05-18 17:44:00,887 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
 2026-05-18 17:44:03,787 endpoint=/ask/stream duration=5064ms question='how much disk space do I have?'
+2026-05-19 16:27:12,933 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 16:27:12,947 endpoint=/ask duration=6362ms question='how do I roll back a deployment?'

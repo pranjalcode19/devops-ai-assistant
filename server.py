@@ -3,6 +3,7 @@ import subprocess
 import json
 import time
 import logging
+import chromadb
 from openai import OpenAI
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
@@ -21,11 +22,12 @@ client = OpenAI(
     api_key="ollama"
 )
 
-docs = ""
-for filename in os.listdir("docs"):
-    if filename.endswith(".txt"):
-        with open(f"docs/{filename}", "r") as f:
-            docs += f"\n\n--- {filename} ---\n{f.read()}"
+chroma = chromadb.PersistentClient(path="./vectordb")
+collection = chroma.get_or_create_collection("docs")
+
+def retrieve(question, n=3):
+    results = collection.query(query_texts=[question], n_results=n)
+    return "\n\n".join(results["documents"][0])
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -77,10 +79,11 @@ If no command is needed, respond with:
 @app.post("/ask")
 def ask(body: Question):
     start = time.time()
+    context = retrieve(body.question)
     response = client.chat.completions.create(
         model="llama3.2",
         messages=[
-            {"role": "system", "content": f"You are a DevOps expert. Use these documents to answer questions:\n\n{docs}\n\nIMPORTANT: If the answer is not in the documents, say 'I don't have that in my docs. Please add it.' Do not make anything up."},
+            {"role": "system", "content": f"You are a DevOps expert. Use these documents to answer questions:\n\n{context}\n\nIMPORTANT: If the answer is not in the documents, say 'I don't have that in my docs. Please add it.' Do not make anything up."},
             {"role": "user", "content": body.question}
         ]
     )
@@ -94,10 +97,11 @@ def ask_stream(body: Question):
     start = time.time()
 
     def generate():
+        context = retrieve(body.question)
         stream = client.chat.completions.create(
             model="llama3.2",
             messages=[
-                {"role": "system", "content": f"You are a DevOps expert. Use these documents to answer questions:\n\n{docs}\n\nIMPORTANT: If the answer is not in the documents, say 'I don't have that in my docs. Please add it.' Do not make anything up."},
+                {"role": "system", "content": f"You are a DevOps expert. Use these documents to answer questions:\n\n{context}\n\nIMPORTANT: If the answer is not in the documents, say 'I don't have that in my docs. Please add it.' Do not make anything up."},
                 {"role": "user", "content": body.question}
             ],
             stream=True
