@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DevOps Assistant</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: monospace; background: #1e1e1e; color: #d4d4d4; height: 100vh; display: flex; flex-direction: column; }
+        #header { padding: 16px 24px; background: #2d2d2d; border-bottom: 1px solid #444; font-size: 14px; color: #888; }
+        #header span { color: #4ec9b0; font-weight: bold; }
+        #chat { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+        .message { max-width: 80%; padding: 12px 16px; border-radius: 8px; line-height: 1.6; white-space: pre-wrap; font-size: 14px; }
+        .user { align-self: flex-end; background: #0e639c; color: #fff; }
+        .assistant { align-self: flex-start; background: #2d2d2d; color: #d4d4d4; border: 1px solid #444; }
+        .assistant.typing { color: #888; }
+        #input-area { padding: 16px 24px; background: #2d2d2d; border-top: 1px solid #444; display: flex; gap: 12px; }
+        #input { flex: 1; padding: 10px 14px; background: #1e1e1e; border: 1px solid #444; border-radius: 6px; color: #d4d4d4; font-family: monospace; font-size: 14px; outline: none; }
+        #input:focus { border-color: #4ec9b0; }
+        #send { padding: 10px 20px; background: #0e639c; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-family: monospace; font-size: 14px; }
+        #send:hover { background: #1177bb; }
+        #mode { padding: 10px 14px; background: #1e1e1e; border: 1px solid #444; border-radius: 6px; color: #d4d4d4; font-family: monospace; font-size: 14px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <span>DevOps Assistant</span> — powered by llama3.2 running locally
+    </div>
+    <div id="chat"></div>
+    <div id="input-area">
+        <select id="mode">
+            <option value="ask">Docs</option>
+            <option value="agent">Agent</option>
+        </select>
+        <input id="input" type="text" placeholder="Ask a DevOps question..." autofocus />
+        <button id="send">Send</button>
+    </div>
+
+    <script>
+        const chat = document.getElementById("chat");
+        const input = document.getElementById("input");
+        const send = document.getElementById("send");
+        const mode = document.getElementById("mode");
+
+        function addMessage(text, role) {
+            const div = document.createElement("div");
+            div.className = `message ${role}`;
+            div.textContent = text;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+            return div;
+        }
+
+        async function ask() {
+            const question = input.value.trim();
+            if (!question) return;
+            input.value = "";
+            addMessage(question, "user");
+
+            const endpoint = mode.value;
+            const div = addMessage("...", "assistant typing");
+
+            if (endpoint === "ask") {
+                const res = await fetch("http://localhost:8000/ask/stream", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question })
+                });
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let text = "";
+                div.classList.remove("typing");
+                div.textContent = "";
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    text += decoder.decode(value);
+                    div.textContent = text;
+                    chat.scrollTop = chat.scrollHeight;
+                }
+            } else {
+                const res = await fetch("http://localhost:8000/agent", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question })
+                });
+                const data = await res.json();
+                div.classList.remove("typing");
+                div.textContent = data.command_run
+                    ? `[ran: ${data.command_run}]\n\n${data.answer}`
+                    : data.answer;
+            }
+        }
+
+        send.addEventListener("click", ask);
+        input.addEventListener("keydown", e => { if (e.key === "Enter") ask(); });
+    </script>
+</body>
+</html>

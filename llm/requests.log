@@ -1,0 +1,20 @@
+2026-05-18 17:34:40,666 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-18 17:34:44,030 endpoint=/ask/stream duration=7620ms question='what is the deployment process?'
+2026-05-18 17:34:56,768 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-18 17:34:59,038 endpoint=/ask/stream duration=2398ms question='what is the deployment process?'
+2026-05-18 17:37:46,209 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-18 17:37:47,393 endpoint=/ask/stream duration=1870ms question='hey'
+2026-05-18 17:37:57,606 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-18 17:37:59,934 endpoint=/ask/stream duration=2629ms question='yes bitbucekt'
+2026-05-18 17:39:06,067 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-18 17:39:09,074 endpoint=/ask/stream duration=3531ms question='"Tools We Use"'
+2026-05-18 17:39:24,957 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-18 17:39:24,969 endpoint=/agent duration=1012ms command=None question='hey'
+2026-05-18 17:39:43,028 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-18 17:40:36,128 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-18 17:40:36,138 endpoint=/agent duration=3246ms command=None question='what can you do'
+2026-05-18 17:43:43,940 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-18 17:43:49,717 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-18 17:43:49,719 endpoint=/agent duration=8647ms command='df -h' question='how much disk space do I have?'
+2026-05-18 17:44:00,887 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-18 17:44:03,787 endpoint=/ask/stream duration=5064ms question='how much disk space do I have?'

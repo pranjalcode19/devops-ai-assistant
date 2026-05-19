@@ -1,0 +1,21 @@
+DEVOPS TEAM ONBOARDING
+
+Tools We Use:
+- CI/CD: Jenkins (primary), GitHub Actions (secondary)
+- Containers: Docker, Kubernetes (EKS on AWS)
+- Monitoring: Datadog for metrics, PagerDuty for alerts
+- Source Control: GitHub (main org: github.com/company)
+- Communication: Slack (#devops, #incidents, #deployments)
+
+Access Request Process:
+1. Submit access request in Jira project DEVOPS
+2. Manager approval required within 24 hours
+3. DevOps lead provisions access within 48 hours
+4. Confirm access and close ticket
+
+Deployment Process:
+1. Raise PR and get 2 approvals
+2. Merge to main triggers staging deploy automatically
+3. Manual approval required for production deploy
+4. Monitor Datadog dashboard for 15 minutes post-deploy
+5. Rollback with: kubectl rollout undo deployment/<name>

@@ -1,0 +1,15 @@
+INCIDENT RESPONSE RUNBOOK
+
+P1 Incident Steps:
+1. Acknowledge the alert within 5 minutes
+2. Join the war room channel #incidents
+3. Assign an incident commander
+4. Post status update every 15 minutes
+5. Escalate to VP Engineering if unresolved after 1 hour
+
+Jenkins Pipeline Failure:
+1. Check console output for error
+2. Verify credentials in Jenkins credential store
+3. Check agent disk space with df -h
+4. Restart Jenkins agent if unresponsive
+5. Escalate to DevOps lead if unresolved after 30 minutes
