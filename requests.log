@@ -20,3 +20,21 @@
 2026-05-18 17:44:03,787 endpoint=/ask/stream duration=5064ms question='how much disk space do I have?'
 2026-05-19 16:27:12,933 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
 2026-05-19 16:27:12,947 endpoint=/ask duration=6362ms question='how do I roll back a deployment?'
+2026-05-19 16:34:02,550 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 16:34:02,568 endpoint=/ask duration=4959ms session=b7ac8f75-6110-4139-9673-8bf70aa0d709 question='what monitoring tool do we use?'
+2026-05-19 16:34:29,441 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 16:34:29,441 endpoint=/ask duration=1027ms session=b7ac8f75-6110-4139-9673-8bf70aa0d709 question='how do I set it up?'
+2026-05-19 16:35:24,742 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 16:35:24,744 endpoint=/ask duration=3118ms session=bc869faa-9828-437a-8dee-105acd7b7090 question='what is the deployment process?'
+2026-05-19 16:35:55,111 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 16:35:55,113 endpoint=/ask duration=1331ms session=bc869faa-9828-437a-8dee-105acd7b7090 question='how many approvals do I need for that?'
+2026-05-19 16:37:05,583 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 16:37:05,593 endpoint=/ask duration=3300ms session=e8c8ba9c-fdb1-4373-af87-447b42cc46d5 question='what is the deployment process?'
+2026-05-19 16:37:17,357 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 16:37:17,359 endpoint=/ask duration=1738ms session=ba839a5a-b51e-4bbf-b4c7-34240ef77954 question='how do I roll back a deployment?'
+2026-05-19 16:38:10,191 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 16:38:12,446 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 16:38:12,447 endpoint=/ask duration=4975ms session=d6ebf11b-08ac-4067-b38e-e2d076533cb3 confidence=7 question='how do I roll back a deployment?'
+2026-05-19 16:38:27,145 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 16:38:31,161 HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 16:38:31,163 endpoint=/ask duration=15075ms session=7c836142-13ae-4472-8210-7af487fa61a6 confidence=6 question='how do I set up Kubernetes?'
