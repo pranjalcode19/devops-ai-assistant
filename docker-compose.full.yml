@@ -1,0 +1,90 @@
+services:
+
+  devops-ai-assistant:
+    build:
+      context: .
+      args:
+        VERSION: local
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - vectordb-data:/app/vectordb
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  llm-monitoring-dashboard:
+    build:
+      context: ../llm-monitoring-dashboard
+      args:
+        VERSION: local
+    ports:
+      - "8001:8000"
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - DB_PATH=/app/data/metrics.db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - metrics-data:/app/data
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  multi-agent-devops:
+    build:
+      context: ../multi-agent-devops
+      args:
+        VERSION: local
+    ports:
+      - "8002:8000"
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=7d"
+    depends_on:
+      - llm-monitoring-dashboard
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./prometheus/grafana-datasource.yml:/etc/grafana/provisioning/datasources/prometheus.yml:ro
+    depends_on:
+      - prometheus
+
+volumes:
+  vectordb-data:
+  metrics-data:
+  prometheus-data:
+  grafana-data:

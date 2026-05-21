@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s       # pull metrics every 15 seconds
+  evaluation_interval: 15s   # evaluate alerting rules every 15 seconds
+
+scrape_configs:
+  # Prometheus scrapes itself — useful for monitoring the monitoring system
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Scrape llm-monitoring-dashboard /metrics endpoint
+  # This is where llm_requests_total, llm_request_latency_seconds etc come from
+  - job_name: "llm-monitoring-dashboard"
+    static_configs:
+      - targets: ["llm-monitoring-dashboard:8000"]
+    metrics_path: /metrics
+
+  # devops-ai-assistant — no Prometheus metrics yet, but /health shows it's up
+  - job_name: "devops-ai-assistant"
+    static_configs:
+      - targets: ["devops-ai-assistant:8000"]
+    metrics_path: /metrics
+
+  # multi-agent-devops
+  - job_name: "multi-agent-devops"
+    static_configs:
+      - targets: ["multi-agent-devops:8000"]
+    metrics_path: /metrics
