@@ -6,12 +6,12 @@ metadata:
   labels:
     app.kubernetes.io/name: devops-ai-assistant
 spec:
-  # Level 4: ClusterIP (internal only) — Ingress handles external traffic
-  # NodePort was fine for local dev; ClusterIP + Ingress is the production pattern
+  # ClusterIP = internal only, Ingress handles all external traffic
   type: ClusterIP
   selector:
     app.kubernetes.io/name: devops-ai-assistant
   ports:
-    - protocol: TCP
+    - name: http        # named port — Ingress references this by name
+      protocol: TCP
       port: 80
       targetPort: 8000

@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ai-platform-ingress
+  namespace: ai-platform
+  annotations:
+    # nginx rewrites /monitor/foo → /foo before forwarding to the service
+    # without this, llm-monitoring-dashboard would receive /monitor/metrics
+    # instead of /metrics and return 404
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          # devops-ai-assistant — catches / and everything under it
+          - path: /()(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: devops-ai-assistant
+                port:
+                  name: http
+
+          # llm-monitoring-dashboard — /monitor → /
+          - path: /monitor()(/.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: llm-monitoring-dashboard
+                port:
+                  name: http
+
+          # multi-agent-devops — /agents → /
+          - path: /agents()(/.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: multi-agent-devops
+                port:
+                  name: http
