@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # Run eval suite if it exists
+      - name: Run evals
+        run: |
+          if [ -f eval_ci.py ]; then
+            python3 eval_ci.py
+          fi
+
+  build-push:
+    runs-on: ubuntu-latest
+    needs: test
+    # Only push image on merge to main, not on PRs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=       # short git SHA as tag
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: VERSION=${{ github.sha }}
+          # Cache layers in GHCR — subsequent builds only rebuild changed layers
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+
+  helm-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v3
+
+      - name: Lint Helm chart for all services
+        run: |
+          helm lint ./helm -f helm/values/devops-ai-assistant.yaml
+          helm lint ./helm -f helm/values/llm-monitoring-dashboard.yaml
+          helm lint ./helm -f helm/values/multi-agent-devops.yaml
+
+      - name: Render templates (dry-run check)
+        run: |
+          helm template devops-ai-assistant ./helm \
+            -f helm/values/devops-ai-assistant.yaml \
+            -n ai-platform > /dev/null
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-push, helm-lint]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v3
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
+
+      - name: Deploy to cluster
+        run: |
+          helm upgrade --install devops-ai-assistant ./helm \
+            -f helm/values/devops-ai-assistant.yaml \
+            -n ai-platform --create-namespace \
+            --set image.tag=${{ github.sha }} \
+            --wait --timeout 5m
+
+      - name: Run helm test
+        run: helm test devops-ai-assistant -n ai-platform --timeout 2m
