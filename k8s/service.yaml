@@ -2,14 +2,16 @@ apiVersion: v1
 kind: Service
 metadata:
   name: devops-ai-assistant
+  namespace: ai-platform
   labels:
-    app: devops-ai-assistant
+    app.kubernetes.io/name: devops-ai-assistant
 spec:
-  type: NodePort
+  # Level 4: ClusterIP (internal only) — Ingress handles external traffic
+  # NodePort was fine for local dev; ClusterIP + Ingress is the production pattern
+  type: ClusterIP
   selector:
-    app: devops-ai-assistant
+    app.kubernetes.io/name: devops-ai-assistant
   ports:
     - protocol: TCP
       port: 80
       targetPort: 8000
-      nodePort: 30080

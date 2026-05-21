@@ -2,42 +2,106 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: devops-ai-assistant
+  namespace: ai-platform
   labels:
-    app: devops-ai-assistant
+    app.kubernetes.io/name: devops-ai-assistant
+    app.kubernetes.io/version: "1.0"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: devops-ai-assistant
+      app.kubernetes.io/name: devops-ai-assistant
+
+  # Level 3: zero-downtime rolling update
+  # maxUnavailable: 0  → never kill an old pod before a new one is Ready
+  # maxSurge: 1        → allow one extra pod during the rollout
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
   template:
     metadata:
       labels:
-        app: devops-ai-assistant
+        app.kubernetes.io/name: devops-ai-assistant
     spec:
+      # Level 2: fsGroup ensures PVC mount is writable by appuser (uid 1000)
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+
+      # Level 2: initContainer runs ingest.py ONCE before the API starts
+      # Pre-populates /app/vectordb on the PVC so the API has docs ready at boot
+      initContainers:
+        - name: ingest
+          image: devops-ai-assistant:latest
+          imagePullPolicy: Never
+          command: ["python3", "ingest.py"]
+          env:
+            - name: OLLAMA_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: devops-ai-assistant-secret
+                  key: OLLAMA_HOST
+          volumeMounts:
+            - name: vectordb
+              mountPath: /app/vectordb
+
+      # Level 3: prefer scheduling pods on different nodes
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: devops-ai-assistant
+                topologyKey: kubernetes.io/hostname
+
       containers:
         - name: devops-ai-assistant
           image: devops-ai-assistant:latest
           imagePullPolicy: Never
           ports:
             - containerPort: 8000
+
           env:
             - name: OLLAMA_HOST
               valueFrom:
-                configMapKeyRef:
-                  name: devops-ai-assistant-config
+                # Level 2: Secret (not ConfigMap) for anything sensitive
+                secretKeyRef:
+                  name: devops-ai-assistant-secret
                   key: OLLAMA_HOST
+
+          volumeMounts:
+            - name: vectordb
+              mountPath: /app/vectordb
+
+          # Level 3: Readiness vs Liveness — KEY DIFFERENCE
+          # readinessProbe: "am I ready to serve traffic?"
+          #   → fails during cold start, removes pod from Service endpoints
+          #   → lower failureThreshold: pull out of rotation fast
           readinessProbe:
             httpGet:
               path: /health
               port: 8000
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             periodSeconds: 10
+            failureThreshold: 3
+
+          # livenessProbe: "am I still alive / not hung?"
+          #   → kills and restarts pod if it stops responding entirely
+          #   → higher thresholds: don't restart during slow model inference
           livenessProbe:
             httpGet:
               path: /health
               port: 8000
-            initialDelaySeconds: 15
+            initialDelaySeconds: 30
             periodSeconds: 20
+            failureThreshold: 5
+
           resources:
             requests:
               memory: "256Mi"
@@ -45,3 +109,8 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+
+      volumes:
+        - name: vectordb
+          persistentVolumeClaim:
+            claimName: devops-ai-assistant-vectordb

@@ -1,0 +1,11 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: devops-ai-assistant-pdb
+  namespace: ai-platform
+spec:
+  # At least 1 pod must be available during node drain / cluster upgrades
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: devops-ai-assistant
