@@ -35,6 +35,10 @@ app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 sessions = {}  # session_id -> list of messages
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 metrics = {"total_requests": 0, "total_latency_ms": 0, "questions": []}
 
 class Question(BaseModel):

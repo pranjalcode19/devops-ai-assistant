@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-ai-assistant
+  labels:
+    app: devops-ai-assistant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devops-ai-assistant
+  template:
+    metadata:
+      labels:
+        app: devops-ai-assistant
+    spec:
+      containers:
+        - name: devops-ai-assistant
+          image: devops-ai-assistant:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: OLLAMA_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: devops-ai-assistant-config
+                  key: OLLAMA_HOST
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
