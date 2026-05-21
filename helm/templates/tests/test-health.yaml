@@ -1,0 +1,24 @@
+# helm test <release> — spins up this pod, runs the command, checks exit code
+# Pass = exit 0, Fail = non-zero exit
+# Used as a post-install gate in CI: helm upgrade && helm test
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "ai-platform.name" . }}-test-health
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ai-platform.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  containers:
+    - name: test-health
+      image: curlimages/curl:latest
+      command:
+        - sh
+        - -c
+        - |
+          curl -sf http://{{ include "ai-platform.name" . }}/health | grep -q '"status":"ok"'
+          echo "Health check passed"
+  restartPolicy: Never

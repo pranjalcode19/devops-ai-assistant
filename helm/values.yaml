@@ -1,0 +1,55 @@
+# Default values — overridden per service via -f values/<service>.yaml
+
+name: ""   # set per service
+
+image:
+  registry: ghcr.io/pranjalcode19
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+service:
+  port: 8000
+
+ingress:
+  enabled: true
+  className: nginx
+  path: /
+
+config:
+  ollamaHost: "http://host.minikube.internal:11434"
+
+# PVC — disabled by default, enabled for stateful services
+persistence:
+  enabled: false
+  size: 1Gi
+  mountPath: /app/data
+
+# initContainer that runs ingest.py before API starts (devops-ai-assistant only)
+initIngest:
+  enabled: false
+
+# PodDisruptionBudget
+pdb:
+  enabled: true
+  minAvailable: 1
+
+# HorizontalPodAutoscaler
+hpa:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  cpuUtilization: 70
+
+# pre-upgrade hook — backs up SQLite before every helm upgrade (llm-monitoring-dashboard only)
+backup:
+  enabled: false
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"

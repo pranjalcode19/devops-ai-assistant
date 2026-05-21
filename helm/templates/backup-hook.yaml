@@ -1,0 +1,37 @@
+{{- if .Values.backup.enabled }}
+# Helm pre-upgrade hook — runs BEFORE the new version is deployed
+# Copies metrics.db → metrics.db.bak so you can restore if upgrade breaks something
+# hook-delete-policy: hook-succeeded → Job is cleaned up after success (keeps cluster tidy)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ai-platform.name" . }}-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ai-platform.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      containers:
+        - name: backup
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              cp {{ .Values.persistence.mountPath }}/metrics.db \
+                 {{ .Values.persistence.mountPath }}/metrics.db.bak
+              echo "Backup complete"
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "ai-platform.name" . }}-data
+      restartPolicy: OnFailure
+{{- end }}

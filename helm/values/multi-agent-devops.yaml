@@ -1,0 +1,21 @@
+name: multi-agent-devops
+
+image:
+  tag: latest
+
+service:
+  port: 8000
+
+ingress:
+  path: /agents
+
+persistence:
+  enabled: false
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "250m"
