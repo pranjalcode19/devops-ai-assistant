@@ -166,3 +166,42 @@ def agent(body: Question):
     duration = round((time.time() - start) * 1000)
     logging.info(f"endpoint=/agent duration={duration}ms command={command_run!r} question={body.question!r}")
     return {"answer": answer, "command_run": command_run}
+
+
+# ── OpenAI-compatible endpoint ────────────────────────────────────────────────
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    model: Optional[str] = "devops-rag-assistant"
+    messages: List[ChatMessage]
+
+@app.post("/v1/chat/completions")
+def chat_completions(body: ChatRequest):
+    question = body.messages[-1].content
+    start = time.time()
+    context = retrieve(question)
+    session_id = str(uuid.uuid4())
+    sessions[session_id] = [
+        {"role": "system", "content": f"You are a DevOps expert. Use these documents:\n\n{context}\n\nIf answer is not in documents, say so."}
+    ]
+    sessions[session_id].append({"role": "user", "content": question})
+    response = client.chat.completions.create(model="llama3.2", messages=sessions[session_id])
+    answer = response.choices[0].message.content
+    duration = round((time.time() - start) * 1000)
+    logging.info(f"openai-compat question={question!r} duration={duration}ms")
+    return {
+        "id": f"chatcmpl-{uuid.uuid4().hex[:8]}",
+        "object": "chat.completion",
+        "model": "devops-rag-assistant",
+        "choices": [{
+            "index": 0,
+            "message": {"role": "assistant", "content": answer},
+            "finish_reason": "stop"
+        }]
+    }
+
+@app.get("/v1/models")
+def list_models():
+    return {"data": [{"id": "devops-rag-assistant", "object": "model"}]}
